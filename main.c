@@ -147,6 +147,9 @@ static void config_handle_succeeded(void *data,
 	fprintf(stderr, "configuration for profile '%s' applied\n",
 			pending->profile->name);
 	pending->state->current_profile = pending->profile;
+	if (pending->profile == pending->state->pending_profile) {
+		pending->state->pending_profile = NULL;
+	}
 	free(pending);
 }
 
@@ -156,6 +159,9 @@ static void config_handle_failed(void *data,
 	zwlr_output_configuration_v1_destroy(config);
 	fprintf(stderr, "failed to apply configuration for profile '%s'\n",
 			pending->profile->name);
+	if (pending->profile == pending->state->pending_profile) {
+		pending->state->pending_profile = NULL;
+	}
 	free(pending);
 }
 
@@ -166,6 +172,9 @@ static void config_handle_cancelled(void *data,
 	// Wait for new serial
 	fprintf(stderr, "configuration for profile '%s' cancelled, retrying\n",
 			pending->profile->name);
+	if (pending->profile == pending->state->pending_profile) {
+		pending->state->pending_profile = NULL;
+	}
 	free(pending);
 }
 
