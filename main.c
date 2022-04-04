@@ -20,6 +20,8 @@
 
 #define HEADS_MAX 64
 
+static bool try_apply_profiles(struct kanshi_state *state);
+
 static bool match_profile_output(struct kanshi_profile_output *output,
 		struct kanshi_head *head) {
 	// Assume the field is empty if it's not set.
@@ -175,6 +177,11 @@ static void config_handle_cancelled(void *data,
 	if (pending->profile == pending->state->pending_profile) {
 		pending->state->pending_profile = NULL;
 	}
+	if (pending->serial != pending->state->serial) {
+		// We've already received a new serial, try re-applying the profile
+		// immediately
+		try_apply_profiles(pending->state);
+	}
 	free(pending);
 }
 
@@ -223,6 +230,7 @@ static void apply_profile(struct kanshi_state *state,
 	fprintf(stderr, "applying profile '%s'\n", profile->name);
 
 	struct kanshi_pending_profile *pending = calloc(1, sizeof(*pending));
+	pending->serial = state->serial;
 	pending->state = state;
 	pending->profile = profile;
 	state->pending_profile = profile;

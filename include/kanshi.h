@@ -58,6 +58,7 @@ struct kanshi_state {
 };
 
 struct kanshi_pending_profile {
+	uint32_t serial;
 	struct kanshi_state *state;
 	struct kanshi_profile *profile;
 };
