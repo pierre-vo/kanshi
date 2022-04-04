@@ -22,11 +22,19 @@
 
 static bool match_profile_output(struct kanshi_profile_output *output,
 		struct kanshi_head *head) {
-	// TODO: improve vendor/model/serial matching
+	// Assume the field is empty if it's not set.
+	const char *make = head->make ? head->make : "";
+	const char *model = head->model ? head->model : "";
+	const char *serial_number =
+		head->serial_number ? head->serial_number : "";
+
+	char identifier[1024];
+	assert(sizeof(identifier) >= strlen(make) + strlen(model) + strlen(serial_number) + 3);
+	snprintf(identifier, sizeof(identifier), "%s %s %s", make, model, serial_number);
+
 	return strcmp(output->name, "*") == 0 ||
 		strcmp(output->name, head->name) == 0 ||
-		(strchr(output->name, ' ') != NULL &&
-		strstr(head->description, output->name) != NULL);
+		strcmp(output->name, identifier) == 0;
 }
 
 static bool match_profile(struct kanshi_state *state,
@@ -390,7 +398,31 @@ static void head_handle_finished(void *data,
 	zwlr_output_head_v1_destroy(head->wlr_head);
 	free(head->name);
 	free(head->description);
+	free(head->make);
+	free(head->model);
+	free(head->serial_number);
 	free(head);
+}
+
+void head_handle_make(void *data,
+		struct zwlr_output_head_v1 *zwlr_output_head_v1,
+		const char *make) {
+	struct kanshi_head *head = data;
+	head->make = strdup(make);
+}
+
+void head_handle_model(void *data,
+		struct zwlr_output_head_v1 *zwlr_output_head_v1,
+		const char *model) {
+	struct kanshi_head *head = data;
+	head->model = strdup(model);
+}
+
+void head_handle_serial_number(void *data,
+		struct zwlr_output_head_v1 *zwlr_output_head_v1,
+		const char *serial_number) {
+	struct kanshi_head *head = data;
+	head->serial_number = strdup(serial_number);
 }
 
 static const struct zwlr_output_head_v1_listener head_listener = {
@@ -404,6 +436,9 @@ static const struct zwlr_output_head_v1_listener head_listener = {
 	.transform = head_handle_transform,
 	.scale = head_handle_scale,
 	.finished = head_handle_finished,
+	.make = head_handle_make,
+	.model = head_handle_model,
+	.serial_number = head_handle_serial_number,
 };
 
 static void output_manager_handle_head(void *data,
@@ -459,7 +494,7 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
 
 	if (strcmp(interface, zwlr_output_manager_v1_interface.name) == 0) {
 		state->output_manager = wl_registry_bind(registry, name,
-			&zwlr_output_manager_v1_interface, 1);
+			&zwlr_output_manager_v1_interface, 2);
 		zwlr_output_manager_v1_add_listener(state->output_manager,
 			&output_manager_listener, state);
 	}
