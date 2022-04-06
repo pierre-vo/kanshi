@@ -21,7 +21,7 @@ reload - reload the config file
 
 Maintained by Simon Ser <contact@emersion.fr>, who is assisted by other
 open-source contributors. For more information about kanshi development, see
-https://github.com/emersion/kanshi.
+https://git.sr.ht/~emersion/kanshi.
 
 # SEE ALSO
 
