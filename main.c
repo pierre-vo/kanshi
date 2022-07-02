@@ -322,7 +322,11 @@ static void mode_handle_finished(void *data,
 		struct zwlr_output_mode_v1 *wlr_mode) {
 	struct kanshi_mode *mode = data;
 	wl_list_remove(&mode->link);
-	zwlr_output_mode_v1_destroy(mode->wlr_mode);
+	if (zwlr_output_mode_v1_get_version(mode->wlr_mode) >= 3) {
+		zwlr_output_mode_v1_release(mode->wlr_mode);
+	} else {
+		zwlr_output_mode_v1_destroy(mode->wlr_mode);
+	}
 	free(mode);
 }
 
@@ -412,7 +416,11 @@ static void head_handle_finished(void *data,
 		struct zwlr_output_head_v1 *wlr_head) {
 	struct kanshi_head *head = data;
 	wl_list_remove(&head->link);
-	zwlr_output_head_v1_destroy(head->wlr_head);
+	if (zwlr_output_head_v1_get_version(head->wlr_head) >= 3) {
+		zwlr_output_head_v1_release(head->wlr_head);
+	} else {
+		zwlr_output_head_v1_destroy(head->wlr_head);
+	}
 	free(head->name);
 	free(head->description);
 	free(head->make);
@@ -510,8 +518,12 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
 	struct kanshi_state *state = data;
 
 	if (strcmp(interface, zwlr_output_manager_v1_interface.name) == 0) {
+		uint32_t bind_version = 2;
+		if (version >= 3) {
+			bind_version = 3;
+		}
 		state->output_manager = wl_registry_bind(registry, name,
-			&zwlr_output_manager_v1_interface, 2);
+			&zwlr_output_manager_v1_interface, bind_version);
 		zwlr_output_manager_v1_add_listener(state->output_manager,
 			&output_manager_listener, state);
 	}
