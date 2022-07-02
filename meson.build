@@ -71,14 +71,14 @@ executable(
 
 if varlink.found()
 	executable(
-			meson.project_name() + 'ctl',
-			files(
-				'ctl.c',
-				'ipc-addr.c',
-			),
-			include_directories: include_directories('include'),
-			dependencies: [varlink],
-			install: true,
+		meson.project_name() + 'ctl',
+		files(
+			'ctl.c',
+			'ipc-addr.c',
+		),
+		include_directories: include_directories('include'),
+		dependencies: [varlink],
+		install: true,
 	)
 endif
 
