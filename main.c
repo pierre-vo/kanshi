@@ -191,15 +191,27 @@ static const struct zwlr_output_configuration_v1_listener config_listener = {
 	.cancelled = config_handle_cancelled,
 };
 
-static bool match_refresh(const struct kanshi_mode *mode, int refresh) {
+static bool match_refresh(const struct kanshi_mode *mode, int refresh, int *delta) {
 	int v = refresh - mode->refresh;
-	return abs(v) < 50;
+	int mode_delta = abs(v);
+	/* If we have a refresh, pick one with the lowest delta from our target.
+	 * Doing a simple fuzzy match that picks the greatest (due to ordering) here can lead us to picking a refresh
+	 * such as 120.01 or 60.01, which is problematic for two reasons:
+	 *  - Modes such as 4K 120.01Hz is too much for link bandwidth of DP 1.4 without DSC.
+	 *  - It becomes out of phase with the majority of content being displayed.
+	 */
+	if (mode_delta < 50 && mode_delta < *delta) {
+		*delta = mode_delta;
+		return true;
+	}
+	return false;
 }
 
 static struct kanshi_mode *match_mode(struct kanshi_head *head,
 		int width, int height, int refresh) {
 	struct kanshi_mode *mode;
 	struct kanshi_mode *last_match = NULL;
+	int mode_delta = INT32_MAX;
 
 	wl_list_for_each(mode, &head->modes, link) {
 		if (mode->width != width || mode->height != height) {
@@ -207,8 +219,8 @@ static struct kanshi_mode *match_mode(struct kanshi_head *head,
 		}
 
 		if (refresh) {
-			if (match_refresh(mode, refresh)) {
-				return mode;
+			if (match_refresh(mode, refresh, &mode_delta)) {
+				last_match = mode;
 			}
 		} else {
 			if (!last_match || mode->refresh > last_match->refresh) {
