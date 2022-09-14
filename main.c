@@ -24,11 +24,10 @@ static bool try_apply_profiles(struct kanshi_state *state);
 
 static bool match_profile_output(struct kanshi_profile_output *output,
 		struct kanshi_head *head) {
-	// Assume the field is empty if it's not set.
-	const char *make = head->make ? head->make : "";
-	const char *model = head->model ? head->model : "";
+	const char *make = head->make ? head->make : "Unknown";
+	const char *model = head->model ? head->model : "Unknown";
 	const char *serial_number =
-		head->serial_number ? head->serial_number : "";
+		head->serial_number ? head->serial_number : "Unknown";
 
 	char identifier[1024];
 	assert(sizeof(identifier) >= strlen(make) + strlen(model) + strlen(serial_number) + 3);
